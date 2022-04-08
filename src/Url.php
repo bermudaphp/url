@@ -88,7 +88,7 @@ final class URL implements \Stringable
      */
     public static function build(array $segments = []): string
     {
-        $url = ($segments['scheme'] ?? self::getCurrentSchema()) . '://';
+        $url = ($segments['scheme'] ?? server_scheme) . '://';
 
         if (!empty($segments['user'])) {
             $url .= $segments['user'] . ':' . $segments['pass'] . '@';
