@@ -31,8 +31,7 @@ final class URL implements \Stringable
      */
     public function createFromString(string $url): self
     {
-        $segments = parse_url($url);
-        if ($segments === false) {
+        if (($segments = parse_url($url)) === false) {
             throw new InvalidArgumentException('Invalid URL passed');
         }
 
