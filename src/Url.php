@@ -8,11 +8,11 @@ namespace Bermuda\Utils;
  */
 final class URL implements \Stringable
 {
-    public function __construct(public ?string $schema = null, public ?string $user = null,
+    public function __construct(public ?string $scheme = null, public ?string $user = null,
         public ?string $pass = null, public ?string $host = null, public ?string $port = null,
         public ?string $path = null, public ?array $query = null, public ?string $fragment = null
     ){
-        $this->schema = $schema ?? server_schema;
+        $this->scheme = $scheme ?? server_scheme;
         $this->host = $host ?? $_SERVER['SERVER_NAME'];
     }
 
@@ -60,7 +60,7 @@ final class URL implements \Stringable
     public function __get(string $name): string|bool|null
     {
         return match ($name) {
-            'isSecure' => strtolower($this->schema) === 'https',
+            'isSecure' => strtolower($this->scheme) === 'https',
             'asString' => (string) $this,
             'default' => null  
         };
@@ -88,7 +88,7 @@ final class URL implements \Stringable
      */
     public static function build(array $segments = []): string
     {
-        $url = ($segments['schema'] ?? self::getCurrentSchema()) . '://';
+        $url = ($segments['scheme'] ?? self::getCurrentSchema()) . '://';
 
         if (!empty($segments['user'])) {
             $url .= $segments['user'] . ':' . $segments['pass'] . '@';
