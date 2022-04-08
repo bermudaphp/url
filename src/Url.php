@@ -4,18 +4,19 @@ namespace Bermuda\Utils;
 
 /**
  * @property-read bool isSecure
+ * @property-read string asString
  */
-final class Url implements \Stringable
+final class URL implements \Stringable
 {
     public function __construct(public ?string $schema = null, public ?string $user = null,
         public ?string $pass = null, public ?string $host = null, public ?string $port = null,
         public ?string $path = null, public ?array $query = null, public ?string $fragment = null
     ){
-        $this->schema = $schema ?? self::getCurrentSchema();
+        $this->schema = $schema ?? server_schema;
         $this->host = $host ?? $_SERVER['SERVER_NAME'];
     }
 
-    public static function createCurrent(): self
+    public static function createFromServerRequestUri(): self
     {
         if (!empty($_SERVER['REQUEST_URI'])) {
             $path = trim((explode('?', $_SERVER['REQUEST_URI']))[0], '/');
@@ -30,17 +31,25 @@ final class Url implements \Stringable
      */
     public function createFromString(string $url): self
     {
-        $array = parse_url($url);
-
-        if ($array === false) {
+        $segments = parse_url($url);
+        if ($segments === false) {
             throw new InvalidArgumentException('Invalid URL passed');
         }
 
+        return self::createFromArray($segments);
+    }
+
+    /**
+     * @param array $segments
+     * @return $this
+     */
+    public function createFromArray(array $segments): self
+    {
         return new self(
-            $array['scheme'] ?? null, $array['user'] ?? null,
-            $array['pass'] ?? null, $array['host'] ?? null,
-            $array['port'] ?? null, $array['pass'] ?? null,
-            $array['query'] ?? null, $array['fragment'] ?? null
+            $segments['scheme'] ?? null, $segments['user'] ?? null,
+            $segments['pass'] ?? null, $segments['host'] ?? null,
+            $segments['port'] ?? null, $segments['pass'] ?? null,
+            $segments['query'] ?? null, $segments['fragment'] ?? null
         );
     }
 
@@ -48,11 +57,12 @@ final class Url implements \Stringable
      * @param string $name
      * @return string|null
      */
-    public function __get(string $name): ?string
+    public function __get(string $name): string|bool|null
     {
         return match ($name) {
-          'isSecure' => $schema !== null ? strcasecmp($schema, 'https') : self::isSecure(),
-          'default' => null  
+            'isSecure' => strtolower($this->schema) === 'https',
+            'asString' => (string) $this,
+            'default' => null  
         };
     }
 
@@ -103,30 +113,5 @@ final class Url implements \Stringable
         }
 
         return $url;
-    }
-
-    /**
-     * @return string
-     */
-    public static function getCurrentSchema(): string
-    {
-        return self::isSecure() ? 'https' : 'http';
-    }
-
-    /**
-     * @return string
-     */
-    public static function getCurrentDomain(): string
-    {
-        return self::getCurrentSchema() . '://' . $_SERVER['SERVER_NAME'];
-    }
-
-    /**
-     * @return bool
-     */
-    public static function isSecure(): bool
-    {
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
-            || $_SERVER['SERVER_PORT'] == 443;
     }
 }
