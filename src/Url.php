@@ -16,13 +16,13 @@ final class URL implements \Stringable
         $this->host = $host ?? $_SERVER['SERVER_NAME'];
     }
 
-    public static function createFromServerRequestUri(): self
+    public static function createFromServer(array $segments): self
     {
         if (!empty($_SERVER['REQUEST_URI'])) {
             $path = trim((explode('?', $_SERVER['REQUEST_URI']))[0], '/');
         }
 
-        return new self(path: $path, query: $_GET);
+        return new self(path: $segments['path'] ?? $path, query: $segments['query'] ?? $_GET);
     }
 
     /**
