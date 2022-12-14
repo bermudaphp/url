@@ -12,7 +12,7 @@ final class URL implements \Stringable
         public ?string $pass = null, public ?string $host = null, public ?string $port = null,
         public ?string $path = null, public ?array $query = null, public ?string $fragment = null
     ){
-        $this->scheme = $scheme ?? server_scheme;
+        $this->scheme = $scheme ?? self::getServerSchema();
         $this->host = $host ?? $_SERVER['SERVER_NAME'];
     }
 
@@ -87,7 +87,7 @@ final class URL implements \Stringable
      */
     public static function build(array $segments = []): string
     {
-        $url = ($segments['scheme'] ?? server_scheme) . '://';
+        $url = ($segments['scheme'] ?? self::getServerSchema()) . '://';
 
         if (!empty($segments['user'])) {
             $url .= $segments['user'] . ':' . $segments['pass'] . '@';
@@ -112,5 +112,14 @@ final class URL implements \Stringable
         }
 
         return $url;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getServerSchema(): string
+    {
+        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+        || $_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http';
     }
 }
