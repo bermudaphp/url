@@ -2,53 +2,66 @@
 
 namespace Bermuda\Utils;
 
+use Bermuda\Arrayable;
+
 /**
  * @property-read bool isSecure
  * @property-read string asString
  */
-final class URL implements \Stringable
+final class Url implements \Stringable, Arrayable
 {
-    public function __construct(public ?string $scheme = null, public ?string $user = null,
-        public ?string $pass = null, public ?string $host = null, public ?string $port = null,
-        public ?string $path = null, public ?array $query = null, public ?string $fragment = null
+    public const host = 'host';
+    public const schema = 'schema';
+    public const query = 'query';
+    public const user = 'user';
+    public const pass = 'pass';
+    public const port = 'port';
+    public const path = 'path';
+    public const fragment = 'fragment';
+
+    public function __construct(
+        public ?string $scheme = null, public ?string $user = null,
+        public ?string $pass = null, public ?string $host = null,
+        public ?string $port = null, public ?string $path = null,
+        public ?array $query = null, public ?string $fragment = null
     ){
-        $this->scheme = $scheme ?? self::getServerSchema();
+        $this->scheme = $scheme ?? server_schema;
         $this->host = $host ?? $_SERVER['SERVER_NAME'];
     }
 
-    public static function createFromServer(array $segments): self
+    public static function fromGlobals(array $segments): self
     {
         if (!empty($_SERVER['REQUEST_URI'])) {
             $path = trim((explode('?', $_SERVER['REQUEST_URI']))[0], '/');
         }
 
-        return new self(path: $segments['path'] ?? $path, query: $segments['query'] ?? $_GET);
+        return new self(path: $segments[self::path] ?? $path, query: $segments[self::query] ?? $_GET);
     }
 
     /**
      * @param string $url
      * @return $this
      */
-    public function createFromString(string $url): self
+    public static function fromString(string $url): self
     {
         if (($segments = parse_url($url)) === false) {
             throw new InvalidArgumentException('Invalid URL passed');
         }
 
-        return self::createFromArray($segments);
+        return self::fromArray($segments);
     }
 
     /**
      * @param array $segments
      * @return $this
      */
-    public function createFromArray(array $segments): self
+    public static function fromArray(array $segments): self
     {
         return new self(
-            $segments['scheme'] ?? null, $segments['user'] ?? null,
-            $segments['pass'] ?? null, $segments['host'] ?? null,
-            $segments['port'] ?? null, $segments['pass'] ?? null,
-            $segments['query'] ?? null, $segments['fragment'] ?? null
+            $segments[self::schema] ?? null, $segments[self::user] ?? null,
+            $segments[self::pass] ?? null, $segments[self::host] ?? null,
+            $segments[self::port] ?? null, $segments[self::pass] ?? null,
+            $segments[self::query] ?? null, $segments[self::fragment] ?? null
         );
     }
 
@@ -87,39 +100,30 @@ final class URL implements \Stringable
      */
     public static function build(array $segments = []): string
     {
-        $url = ($segments['scheme'] ?? self::getServerSchema()) . '://';
+        $url = ($segments[self::schema] ?? server_schema) . '://';
 
-        if (!empty($segments['user'])) {
-            $url .= $segments['user'] . ':' . $segments['pass'] . '@';
+        if (!empty($segments[self::user])) {
+            $url .= $segments[self::user] . ':' . $segments[self::pass] . '@';
         }
 
-        $url .= ($segments['host'] ?? $_SERVER['SERVER_NAME']);
+        $url .= ($segments[self::host] ?? $_SERVER['SERVER_NAME']);
 
-        if (!empty($segments['port'])) {
-            $url .= ':' . $segments['port'];
+        if (!empty($segments[self::port])) {
+            $url .= ':' . $segments[self::port];
         }
 
-        if (!empty($segments['path'])) {
-            $url .= '/' . trim($segments['path'], '/');
+        if (!empty($segments[self::path])) {
+            $url .= '/' . trim($segments[self::path], '/');
         }
 
-        if (!empty($segments['query'])) {
-            $url .= '?'. http_build_query($segments['query']);
+        if (!empty($segments[self::query])) {
+            $url .= '?'. http_build_query($segments[self::query]);
         }
 
-        if (!empty($segments['fragment'])) {
-            $url .= '#' . $segments['fragment'];
+        if (!empty($segments[self::fragment])) {
+            $url .= '#' . $segments[self::fragment];
         }
 
         return $url;
-    }
-
-    /**
-     * @return string
-     */
-    public static function getServerSchema(): string
-    {
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
-        || $_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http';
     }
 }
