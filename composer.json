@@ -4,7 +4,10 @@
   "autoload": {
     "psr-4": {
       "Bermuda\\Utils\\": "src/"
-    }
+    },
+    "files": [
+      "src/constants.php"
+    ]
   },
   "require": {
     "php": "^8.1"
