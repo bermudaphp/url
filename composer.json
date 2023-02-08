@@ -1,9 +1,9 @@
 {
-  "name": "bermudaphp/utils-url",
+  "name": "bermudaphp/url",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Bermuda\\Utils\\": "src/"
+      "Bermuda\\Url\\": "src/"
     },
     "files": [
       "src/constants.php"
