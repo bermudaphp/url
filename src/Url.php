@@ -1,7 +1,8 @@
 <?php
 
-namespace Bermuda\Url;
+namespace Bermuda\Utils;
 
+use App\UrlSegment;
 use Bermuda\Arrayable;
 
 /**
@@ -74,6 +75,82 @@ final class Url implements \Stringable, Arrayable
             UrlSegment::query => $this->segments[UrlSegment::query] ?? null,
             'default' => null  
         };
+    }
+
+    public function withod(string ... $segments): self
+    {
+        $data = $this->segments;
+        foreach ($segments as $segment) {
+            if (array_key_exists($segment, $data)) {
+                unset($data[$segment]);
+            }
+        }
+
+        return new self($data);
+    }
+
+    public function withHost(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::host] = $value;
+
+        return new self($segments);
+    }
+
+    public function withFragment(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::fragment] = $value;
+
+        return new self($segments);
+    }
+
+    public function withUser(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::user] = $value;
+
+        return new self($segments);
+    }
+
+    public function withPass(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::pass] = $value;
+
+        return new self($segments);
+    }
+
+    public function withPath(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::path] = $value;
+
+        return new self($segments);
+    }
+
+    public function withPort(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::port] = $value;
+
+        return new self($segments);
+    }
+
+    public function withScheme(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::scheme] = $value;
+
+        return new self($segments);
+    }
+
+    public function withQuery(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::query] = $value;
+
+        return new self($segments);
     }
 
     /**
