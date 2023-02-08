@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Utils;
+namespace Bermuda\Url;
 
 use Bermuda\Arrayable;
 
