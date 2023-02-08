@@ -1,4 +1,4 @@
 # Install
 ```bash
-composer require bermudaphp/utils-url
+composer require bermudaphp/url
 ````
