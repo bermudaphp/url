@@ -36,4 +36,6 @@ $currentUrl->toArray();
     "path" => "/bermudaphp/url"
   ]
 ]
+
+Url::build(['scheme' => 'https', 'host' => 'github.com', 'path' => 'bermudaphp/url']); // "https://github.com/bermudaphp/url"
 ````
