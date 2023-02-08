@@ -12,7 +12,7 @@ if (PHP_SAPI === 'cli') {
     || $_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http');
 
     define('server_host', $_SERVER['SERVER_NAME']);
-    define('server_scheme_is_secure', server_schema == 'https');
+    define('server_scheme_is_secure', server_scheme == 'https');
     define('server_port', $_SERVER['SERVER_PORT']);
 }
 
