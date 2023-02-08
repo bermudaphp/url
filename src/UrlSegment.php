@@ -12,4 +12,10 @@ final class UrlSegment
     public const port = 'port';
     public const path = 'path';
     public const fragment = 'fragment';
+    public const all = [
+        self::host, self::scheme,
+        self::query, self::user,
+        self::pass, self::port,
+        self::path, self::fragment
+    ];
 }
