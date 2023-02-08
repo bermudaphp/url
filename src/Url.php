@@ -144,8 +144,12 @@ final class Url implements \Stringable, Arrayable
         return new self($segments);
     }
 
-    public function withQuery(string $value): self
+    public function withQuery(array|string $value): self
     {
+        if (is_array($value)) {
+            $value = http_build_query($value);
+        }
+        
         $segments = $this->segments;
         $segments[UrlSegment::query] = $value;
 
