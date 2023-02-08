@@ -6,36 +6,41 @@ use Bermuda\Arrayable;
 
 /**
  * @property-read bool isSecure
- * @property-read string asString
+ * @property-read string scheme
+ * @property-read string host
+ * @property-read string pass
+ * @property-read string port
+ * @property-read string query
+ * @property-read string path
+ * @property-read string fragment
+ * @property-read string user
  */
 final class Url implements \Stringable, Arrayable
 {
-    public const host = 'host';
-    public const schema = 'schema';
-    public const query = 'query';
-    public const user = 'user';
-    public const pass = 'pass';
-    public const port = 'port';
-    public const path = 'path';
-    public const fragment = 'fragment';
-
-    public function __construct(
-        public ?string $scheme = null, public ?string $user = null,
-        public ?string $pass = null, public ?string $host = null,
-        public ?string $port = null, public ?string $path = null,
-        public ?array $query = null, public ?string $fragment = null
-    ){
-        $this->scheme = $scheme ?? server_schema;
-        $this->host = $host ?? $_SERVER['SERVER_NAME'];
+    public function __construct(private array $segments)
+    {
     }
 
-    public static function fromGlobals(array $segments): self
+    /**
+     * @param array|null $segments
+     * @return static
+     * @throws \RuntimeException
+     */
+    public static function fromGlobals(array $segments = null): self
     {
-        if (!empty($_SERVER['REQUEST_URI'])) {
-            $path = trim((explode('?', $_SERVER['REQUEST_URI']))[0], '/');
-        }
+        return new self(parse_url(self::serverUrl()));
+    }
 
-        return new self(path: $segments[self::path] ?? $path, query: $segments[self::query] ?? $_GET);
+    /**
+     * @return string
+     * @throws \RuntimeException
+     */
+    public static function serverUrl(): string
+    {
+        if (PHP_SAPI == 'cli') {
+            throw new \RuntimeException('PHP cli sapi not supported');
+        }
+        return $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
     }
 
     /**
@@ -48,21 +53,7 @@ final class Url implements \Stringable, Arrayable
             throw new InvalidArgumentException('Invalid URL passed');
         }
 
-        return self::fromArray($segments);
-    }
-
-    /**
-     * @param array $segments
-     * @return $this
-     */
-    public static function fromArray(array $segments): self
-    {
-        return new self(
-            $segments[self::schema] ?? null, $segments[self::user] ?? null,
-            $segments[self::pass] ?? null, $segments[self::host] ?? null,
-            $segments[self::port] ?? null, $segments[self::pass] ?? null,
-            $segments[self::query] ?? null, $segments[self::fragment] ?? null
-        );
+        return new self($segments);
     }
 
     /**
@@ -73,7 +64,14 @@ final class Url implements \Stringable, Arrayable
     {
         return match ($name) {
             'isSecure' => strtolower($this->scheme) === 'https',
-            'asString' => (string) $this,
+            UrlSegment::host => $this->segments[UrlSegment::host] ?? null,
+            UrlSegment::port => $this->segments[UrlSegment::port] ?? null,
+            UrlSegment::user => $this->segments[UrlSegment::user] ?? null,
+            UrlSegment::scheme => $this->segments[UrlSegment::scheme] ?? null,
+            UrlSegment::pass => $this->segments[UrlSegment::pass] ?? null,
+            UrlSegment::path => $this->segments[UrlSegment::path] ?? null,
+            UrlSegment::fragment => $this->segments[UrlSegment::fragment] ?? null,
+            UrlSegment::query => $this->segments[UrlSegment::query] ?? null,
             'default' => null  
         };
     }
@@ -91,7 +89,12 @@ final class Url implements \Stringable, Arrayable
      */
     public function __toString(): string
     {
-        return self::build($this->toArray());
+        return $this->toString();
+    }
+
+    public function toString(): string
+    {
+        return self::build($this->segments);
     }
 
     /**
@@ -100,28 +103,32 @@ final class Url implements \Stringable, Arrayable
      */
     public static function build(array $segments = []): string
     {
-        $url = ($segments[self::schema] ?? server_schema) . '://';
-
-        if (!empty($segments[self::user])) {
-            $url .= $segments[self::user] . ':' . $segments[self::pass] . '@';
+        if (PHP_SAPI == 'cli') {
+            throw new \RuntimeException('PHP cli sapi not supported');
         }
 
-        $url .= ($segments[self::host] ?? $_SERVER['SERVER_NAME']);
+        $url = ($segments[UrlSegment::scheme] ?? server_scheme) . '://';
 
-        if (!empty($segments[self::port])) {
-            $url .= ':' . $segments[self::port];
+        if (!empty($segments[UrlSegment::user])) {
+            $url .= $segments[UrlSegment::user] . ':' . $segments[UrlSegment::pass] . '@';
         }
 
-        if (!empty($segments[self::path])) {
-            $url .= '/' . trim($segments[self::path], '/');
+        $url .= ($segments[UrlSegment::host] ?? $_SERVER['SERVER_NAME']);
+
+        if (!empty($segments[UrlSegment::port])) {
+            $url .= ':' . $segments[UrlSegment::port];
         }
 
-        if (!empty($segments[self::query])) {
-            $url .= '?'. http_build_query($segments[self::query]);
+        if (!empty($segments[UrlSegment::path])) {
+            $url .= '/' . trim($segments[UrlSegment::path], '/');
         }
 
-        if (!empty($segments[self::fragment])) {
-            $url .= '#' . $segments[self::fragment];
+        if (!empty($segments[UrlSegment::query])) {
+            $url .= '?'. http_build_query($segments[UrlSegment::query]);
+        }
+
+        if (!empty($segments[UrlSegment::fragment])) {
+            $url .= '#' . $segments[UrlSegment::fragment];
         }
 
         return $url;
