@@ -19,6 +19,9 @@ final class Url implements \Stringable, Arrayable
 {
     public function __construct(private array $segments)
     {
+        foreach ($this->segments as $name => $value) {
+            if (in_array($name, UrlSegment::all)) unset($this->segments[$name]);
+        }
     }
 
     /**
@@ -28,7 +31,8 @@ final class Url implements \Stringable, Arrayable
      */
     public static function fromGlobals(array $segments = null): self
     {
-        return new self(parse_url(self::serverUrl()));
+        if (!$segments) return new self(parse_url(self::serverUrl()));
+        return new self(array_merge(parse_url(self::serverUrl()), $segments));
     }
 
     /**
@@ -49,7 +53,7 @@ final class Url implements \Stringable, Arrayable
      */
     public static function parse(string $url): self
     {
-        if (($segments = parse_url($url)) === false) {
+        if (($segments = parse_url(urldecode($url))) === false) {
             throw new InvalidArgumentException('Invalid URL passed');
         }
 
