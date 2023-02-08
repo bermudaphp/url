@@ -47,7 +47,7 @@ final class Url implements \Stringable, Arrayable
      * @param string $url
      * @return $this
      */
-    public static function fromString(string $url): self
+    public static function parse(string $url): self
     {
         if (($segments = parse_url($url)) === false) {
             throw new InvalidArgumentException('Invalid URL passed');
