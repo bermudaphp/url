@@ -2,7 +2,6 @@
 
 namespace Bermuda\Utils;
 
-use App\UrlSegment;
 use Bermuda\Arrayable;
 
 /**
