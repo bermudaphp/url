@@ -204,7 +204,15 @@ final class Url implements \Stringable, Arrayable
         }
 
         if (!empty($segments[UrlSegment::query])) {
-            $url .= '?'. http_build_query($segments[UrlSegment::query]);
+            if ($url[strlen($url)-1] != '/') $url .= '/';
+
+            $url .= '?';
+
+            if (is_array($segments[UrlSegment::query])) {
+                $url .= http_build_query($segments[UrlSegment::query]);
+            } else {
+                $url .= $segments[UrlSegment::query];
+            }
         }
 
         if (!empty($segments[UrlSegment::fragment])) {
