@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Utils;
+namespace Bermuda\Url;
 
 if (PHP_SAPI === 'cli') {
     define('server_scheme', '');
