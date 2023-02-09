@@ -20,7 +20,7 @@ final class Url implements \Stringable, Arrayable
     public function __construct(private array $segments)
     {
         foreach ($this->segments as $name => $value) {
-            if (in_array($name, UrlSegment::all)) unset($this->segments[$name]);
+            if (!in_array($name, UrlSegment::all)) unset($this->segments[$name]);
         }
     }
 
