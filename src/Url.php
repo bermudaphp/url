@@ -1,79 +1,239 @@
 <?php
 
-namespace Bermuda\Paginator;
+namespace Bermuda\Url;
 
-use Bermuda\Url\Url;
-use Bermuda\Url\UrlSegment;
-use Psr\Http\Message\ServerRequestInterface;
+use Bermuda\Arrayable;
 
-class Query implements QueryInterface
+/**
+ * @property-read bool isSecure
+ * @property-read string scheme
+ * @property-read string host
+ * @property-read string pass
+ * @property-read string port
+ * @property-read string query
+ * @property-read string path
+ * @property-read string fragment
+ * @property-read string user
+ */
+final class Url implements \Stringable, Arrayable
 {
-    public function __construct(
-        public readonly Url $url,
-        protected array $queryParams = [],
-    ) {
+    public function __construct(private array $segments)
+    {
+        foreach ($this->segments as $name => $value) {
+            if (!in_array($name, UrlSegment::all)) unset($this->segments[$name]);
+        }
     }
 
-    public static function fromGlobals(): static
+    /**
+     * @param array|null $segments
+     * @return static
+     * @throws \RuntimeException
+     */
+    public static function fromGlobals(array $segments = null): self
     {
-        return new static(Url::fromGlobals()->withod('query'), $_GET);
+        return new self(array_merge(parse_url(self::serverUrl()), $segments ?? []));
     }
 
-    public function __toString(): string
+    /**
+     * @return string
+     * @throws \RuntimeException
+     */
+    public static function serverUrl(): string
     {
-        return http_build_query($this->queryParams);
+        if (PHP_SAPI == 'cli') {
+            throw new \RuntimeException('PHP cli sapi not supported');
+        }
+        return $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
     }
 
-    public function toArray(): array
+    /**
+     * @param string $url
+     * @return $this
+     */
+    public static function parse(string $url): self
     {
-        return $this->queryParams;
-    }
+        if (($segments = parse_url(urldecode($url))) === false) {
+            throw new InvalidArgumentException('Invalid URL passed');
+        }
 
-    public function getIterator(): \Generator
-    {
-        foreach ($this->queryParams as $prop => $value) yield $prop => $value;
-    }
-
-    public function with(string $name, mixed $value): QueryInterface
-    {
-        $copy = clone $this;
-        $copy->queryParams[$name] = $value;
-
-        return $copy;
-    }
-
-    public function withod(string $name): QueryInterface
-    {
-        $copy = clone $this;
-        unset($copy->queryParams[$name]);
-
-        return $copy;
+        return new self($segments);
     }
 
     /**
      * @param string $name
-     * @return mixed
+     * @return string|null
      */
-    public function __get(string $name): mixed
+    public function __get(string $name): string|bool|null
     {
-        return $this->queryParams[$name] ?? null;
+        return match ($name) {
+            'isSecure' => strtolower($this->scheme) === 'https',
+            UrlSegment::host => $this->segments[UrlSegment::host] ?? null,
+            UrlSegment::port => $this->segments[UrlSegment::port] ?? null,
+            UrlSegment::user => $this->segments[UrlSegment::user] ?? null,
+            UrlSegment::scheme => $this->segments[UrlSegment::scheme] ?? null,
+            UrlSegment::pass => $this->segments[UrlSegment::pass] ?? null,
+            UrlSegment::path => $this->segments[UrlSegment::path] ?? null,
+            UrlSegment::fragment => $this->segments[UrlSegment::fragment] ?? null,
+            UrlSegment::query => $this->segments[UrlSegment::query] ?? null,
+            'default' => null  
+        };
     }
 
-    public function has(string $name): bool
+    public function withod(string ... $segments): self
     {
-        return array_key_exists($name, $this->queryParams);
+        $data = $this->segments;
+        foreach ($segments as $segment) {
+            if (array_key_exists($segment, $data)) {
+                unset($data[$segment]);
+            }
+        }
+
+        return new self($data);
+    }
+
+    public function withHost(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::host] = $value;
+
+        return new self($segments);
+    }
+
+    public function withFragment(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::fragment] = $value;
+
+        return new self($segments);
+    }
+
+    public function withUser(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::user] = $value;
+
+        return new self($segments);
+    }
+
+    public function withPass(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::pass] = $value;
+
+        return new self($segments);
+    }
+
+    public function withPath(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::path] = $value;
+
+        return new self($segments);
+    }
+
+    public function withPort(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::port] = $value;
+
+        return new self($segments);
+    }
+
+    public function withScheme(string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::scheme] = $value;
+
+        return new self($segments);
+    }
+
+    public function withQuery(array|string $value): self
+    {
+        $segments = $this->segments;
+        $segments[UrlSegment::query] = $value;
+
+        return new self($segments);
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return array_filter(get_object_vars($this), static fn($v) => $v !== null);
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 
     public function toString(): string
     {
-        return $this->url->withQuery($this->queryParams)->toString();
+        return self::build($this->segments);
     }
 
-    public static function fromRequest(ServerRequestInterface $request): static
+    /**
+     * @param array $segments
+     * @return string
+     */
+    public static function build(array $segments = []): string
     {
-        return new static(new Url([
-            UrlSegment::scheme => $request->getUri()->getScheme(),
-            UrlSegment::host => $request->getUri()->getHost()
-        ]), $request->getQueryParams());
+        if (PHP_SAPI == 'cli') {
+            throw new \RuntimeException('PHP cli sapi not supported');
+        }
+
+        $url = ($segments[UrlSegment::scheme] ?? server_scheme) . '://';
+
+        if (!empty($segments[UrlSegment::user])) {
+            $url .= $segments[UrlSegment::user] . ':' . $segments[UrlSegment::pass] . '@';
+        }
+
+        $url .= ($segments[UrlSegment::host] ?? $_SERVER['SERVER_NAME']);
+
+        if (!empty($segments[UrlSegment::port])) {
+            $url .= ':' . $segments[UrlSegment::port];
+        }
+
+        if (!empty($segments[UrlSegment::path])) {
+            $url .= '/' . trim($segments[UrlSegment::path], '/');
+        }
+
+        if (!empty($segments[UrlSegment::query])) {
+            if ($url[strlen($url)-1] != '/') $url .= '/';
+
+            $url .= '?';
+            if (is_array($segments[UrlSegment::query])) {
+                $glue = '';
+                foreach ($segments[UrlSegment::query] as $id => $segment) {
+                    $id = rawurlencode($id);
+                    if (is_array($segment)) {
+                        $glue = '';
+                        foreach ($segment as $i => $v) {
+                            $i = rawurlencode($i);
+                            $url .= $glue;
+                            $url .= "{$id}[$i]=";
+                            $url .= is_array($v) ? implode(',', array_map('rawurlencode', $v)) : rawurlencode($v);
+                            $glue = '&';
+                        }
+                    } else {
+                        $url .= $glue;
+                        $url .= "$id=".rawurlencode($segment);
+                        $glue = '&';
+                    }
+                }
+            } else {
+                $url .= $segments[UrlSegment::query];
+            }
+        }
+
+        if (!empty($segments[UrlSegment::fragment])) {
+            $url .= '#' . $segments[UrlSegment::fragment];
+        }
+
+        return $url;
     }
 }
