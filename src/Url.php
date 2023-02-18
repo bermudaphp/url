@@ -211,7 +211,7 @@ final class Url implements \Stringable, Arrayable
                 foreach ($segments[UrlSegment::query] as $id => $segment) {
                     $id = rawurlencode($id);
                     if (is_array($segment)) {
-                        $glue = '';
+                        $glue = str_ends_with($url, '?') ? '' : '&';
                         foreach ($segment as $i => $v) {
                             $i = rawurlencode($i);
                             $url .= $glue;
