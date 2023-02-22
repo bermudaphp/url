@@ -82,13 +82,48 @@ final class Url implements \Stringable, Arrayable
     public function without(string ... $segments): self
     {
         $data = $this->segments;
-        foreach ($segments as $segment) {
-            if (array_key_exists($segment, $data)) {
-                unset($data[$segment]);
-            }
-        }
-
+        foreach ($segments as $segment) unset($data[$segment]);
         return new self($data);
+    }
+    
+    public function withoutQuery(): self
+    {
+        return $this->without(UrlSegment::query);
+    }
+
+    public function withoutProt(): self
+    {
+        return $this->without(UrlSegment::port);
+    }
+
+    public function withoutHost(): self
+    {
+        return $this->without(UrlSegment::host);
+    }
+
+    public function withoutFragment(): self
+    {
+        return $this->without(UrlSegment::fragment);
+    }
+
+    public function withoutUser(): self
+    {
+        return $this->without(UrlSegment::user);
+    }
+
+    public function withoutPass(): self
+    {
+        return $this->without(UrlSegment::pass);
+    }
+
+    public function withoutPath(): self
+    {
+        return $this->without(UrlSegment::path);
+    }
+
+    public function withoutScheme(): self
+    {
+        return $this->without(UrlSegment::scheme);
     }
 
     public function withHost(string $value): self
@@ -205,7 +240,7 @@ final class Url implements \Stringable, Arrayable
         if (!empty($segments[UrlSegment::query])) {
             if ($url[strlen($url)-1] != '/') $url .= '/';
             $url .= '?';
-            
+
             if (is_array($segments[UrlSegment::query])) $url .= self::buildQuery($segments[UrlSegment::query]);
             else $url .= $segments[UrlSegment::query];
         }
@@ -216,7 +251,7 @@ final class Url implements \Stringable, Arrayable
 
         return $url;
     }
-    
+
     public static function buildQuery(array $queryParams): string
     {
         $glue = '';
@@ -238,7 +273,7 @@ final class Url implements \Stringable, Arrayable
                 $glue = '&';
             }
         }
-        
+
         return $queryString;
     }
 }
