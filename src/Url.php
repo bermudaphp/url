@@ -79,7 +79,7 @@ final class Url implements \Stringable, Arrayable
         };
     }
 
-    public function withod(string ... $segments): self
+    public function without(string ... $segments): self
     {
         $data = $this->segments;
         foreach ($segments as $segment) {
