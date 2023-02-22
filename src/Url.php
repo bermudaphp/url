@@ -204,30 +204,10 @@ final class Url implements \Stringable, Arrayable
 
         if (!empty($segments[UrlSegment::query])) {
             if ($url[strlen($url)-1] != '/') $url .= '/';
-
             $url .= '?';
-            if (is_array($segments[UrlSegment::query])) {
-                $glue = '';
-                foreach ($segments[UrlSegment::query] as $id => $segment) {
-                    $id = rawurlencode($id);
-                    if (is_array($segment)) {
-                        $glue = str_ends_with($url, '?') ? '' : '&';
-                        foreach ($segment as $i => $v) {
-                            $i = rawurlencode($i);
-                            $url .= $glue;
-                            $url .= "{$id}[$i]=";
-                            $url .= is_array($v) ? implode(',', array_map('rawurlencode', $v)) : rawurlencode($v);
-                            $glue = '&';
-                        }
-                    } else {
-                        $url .= $glue;
-                        $url .= "$id=".rawurlencode($segment);
-                        $glue = '&';
-                    }
-                }
-            } else {
-                $url .= $segments[UrlSegment::query];
-            }
+            
+            if (is_array($segments[UrlSegment::query])) $url .= self::buildQuery($segments[UrlSegment::query]);
+            else $url .= $segments[UrlSegment::query];
         }
 
         if (!empty($segments[UrlSegment::fragment])) {
@@ -235,5 +215,30 @@ final class Url implements \Stringable, Arrayable
         }
 
         return $url;
+    }
+    
+    public static function buildQuery(array $queryParams): string
+    {
+        $glue = '';
+        $queryString = '';
+        foreach ($queryParams as $id => $param) {
+            $id = rawurlencode($id);
+            if (is_array($param)) {
+                $glue = str_ends_with($queryString, '?') ? '' : '&';
+                foreach ($param as $i => $v) {
+                    $i = rawurlencode($i);
+                    $queryString .= $glue;
+                    $queryString .= "{$id}[$i]=";
+                    $queryString .= is_array($v) ? implode(',', array_map('rawurlencode', $v)) : rawurlencode($v);
+                    $glue = '&';
+                }
+            } else {
+                $queryString .= $glue;
+                $queryString .= "$id=".rawurlencode($param);
+                $glue = '&';
+            }
+        }
+        
+        return $queryString;
     }
 }
