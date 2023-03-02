@@ -1,6 +1,6 @@
 <?php
 
-namespace Bermuda\Url;
+namespace Bermuda\Stdlib;
 
 final class UrlSegment
 {
