@@ -1,8 +1,6 @@
 <?php
 
-namespace Bermuda\Url;
-
-use Bermuda\Arrayable;
+namespace Bermuda\Stdlib;
 
 /**
  * @property-read bool isSecure
