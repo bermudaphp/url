@@ -11,6 +11,6 @@
   },
   "require": {
     "php": "^8.1",
-    "bermudaphp/arrayable": "^2.0"
+    "bermudaphp/arrayable": "^1.0"
   }
 }
