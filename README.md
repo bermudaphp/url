@@ -19,7 +19,7 @@ $url = Url::parse('http://username:password@hostname:9090/path?arg=value#anchor'
   ]
 }
 
-$url->withod('fragment', 'path')->toString(); // "http://username:password@hostname:9090/?arg=value"
+$url->without('fragment', 'path')->toString(); // "http://username:password@hostname:9090/?arg=value"
 
 $currentUrl = Url::fromGlobals()->toString(); // https://github.com/bermudaphp/url
 $currentUrl = $currentUrl->withHost('new-hostname.com');
